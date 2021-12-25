@@ -1,64 +1,77 @@
 class MyPromise {
-  // static pending fulfilled reject
   constructor(func) {
-    this.status = "pending"
-    this.result = null;
+    this.status = "pending";
+    this.reslut = null;
     this.resloveCallback = [];
     this.rejectCallback = [];
     try {
-      func(this.resolve.bind(this), this.reject.bind(this))
-    } catch (error) {
-      this.reject(error);
+      func(this.reslove.bind(this), this.reject.bind(this));
+    } catch (err) {
+      this.reslut = err;
+      this.reject();
     }
   }
-  resolve(result) {
+  reslove(result) {
     setTimeout(() => {
       if (this.status === "pending") {
-        this.status = "fulfilled"
+        this.status = "fulfilled";
         this.result = result;
         this.resloveCallback.forEach(callback => {
-          callback()
-        })
+          callback(this.reslut);
+        });
       }
-    }, 0)
+    });
   }
   reject(result) {
     setTimeout(() => {
       if (this.status === "pending") {
-        this.status = "reject"
+        this.status = "reject";
         this.result = result;
         this.rejectCallback.forEach(callback => {
-          callback()
-        })
+          callback(this.reslut);
+        });
       }
-    }, 0);
+    });
   }
   then(onFulfilled, onReject) {
-    return new MyPromise((reslove, reject) => {
-      onFulfilled = typeof onFulfilled === "function" ? onFulfilled : () => { }
-      onReject = typeof onReject === "function" ? onReject : () => { }
+    onFulfilled = typeof onFulfilled === "function" ? onFulfilled : () => {};
+    onReject = typeof onReject === "function" ? onReject : () => {};
+    return new MyPromise(() => {
       if (this.status === "pending") {
-        this.resloveCallback.push(onFulfilled)
-        this.rejectCallback.push(onReject)
+        this.resloveCallback.push(onFulfilled);
+        this.rejectCallback.push(onReject);
       }
       if (this.status === "fulfilled") {
         setTimeout(() => {
-          onFulfilled(this.result)
-        }, 0)
+          onFulfilled(this.reslut);
+        });
       }
       if (this.status === "reject") {
         setTimeout(() => {
-          onReject(this.result)
-        }, 0)
+          onReject(this.reslut);
+        });
       }
-    })
+    });
+  }
+  catch(onReject) {
+    if (this.status === "pending") {
+      this.rejectCallback.push(onReject);
+    }
+    if (this.status === "reject") {
+      setTimeout(() => {
+        onReject(this.reslut);
+      });
+    }
   }
 }
-let jianli = new MyPromise((reslove, reject) => {
-  // throw new Error("失敗")
+let commitment = new MyPromise((reslove, reject) => {
   setTimeout(() => {
-    reslove("這是一個接口")
-  }, 0)
-}).then((res)=> {
+    let res = { code: 10401, data: [] };
+    if (res.code === 2000) reslove("成功");
+    else reject("失败");
+  });
+}).then((res) => {
   console.log(res);
+}).catch((err) => {
+  console.log(err);
 })
